@@ -1,8 +1,15 @@
 import { Application } from "pixi.js";
 import { initDevtools } from "@pixi/devtools";
-import { Grid, CellType } from "./Grid";
+import { Grid, CellType, PAINT_INTERVALS } from "./Grid";
 import { Renderer } from "./Renderer";
 import { updateGrid } from "./Behavior";
+
+const CELL_SIZE = 10;
+const SIMULATION_INTERVAL = 8;
+const MAX_STEPS_PER_TICK = 8;
+const MATERIALS = Object.values(CellType).filter(
+  (v) => typeof v === "number",
+) as CellType[];
 
 (async () => {
   const app = new Application();
@@ -16,8 +23,6 @@ import { updateGrid } from "./Behavior";
   });
 
   document.getElementById("pixi-container")!.appendChild(app.canvas);
-
-  const CELL_SIZE = 10;
 
   let grid = new Grid(
     Math.ceil(window.innerWidth / CELL_SIZE),
@@ -51,19 +56,38 @@ import { updateGrid } from "./Behavior";
     renderer = new Renderer(app, grid, CELL_SIZE);
   });
 
+  let currentMaterialIndex = 0;
+  let brushRadius = 0;
   let isMouseDown = false;
   let mouseX = 0;
   let mouseY = 0;
 
   app.canvas.addEventListener("mousedown", (e) => {
-    isMouseDown = true;
-    updateMouse(e);
+    if (e.button === 2) {
+      currentMaterialIndex = (currentMaterialIndex + 1) % MATERIALS.length;
+      return;
+    }
+    if (e.button === 0) {
+      isMouseDown = true;
+      updateMouse(e);
+    }
   });
   app.canvas.addEventListener("mouseup", () => {
     isMouseDown = false;
   });
   app.canvas.addEventListener("mousemove", (e) => {
     updateMouse(e);
+  });
+  app.canvas.addEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+      brushRadius = Math.max(0, brushRadius - Math.sign(e.deltaY));
+    },
+    { passive: false },
+  );
+  app.canvas.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
   });
 
   function updateMouse(e: MouseEvent) {
@@ -72,10 +96,45 @@ import { updateGrid } from "./Behavior";
     mouseY = Math.floor((e.clientY - rect.top) / CELL_SIZE);
   }
 
-  app.ticker.add(() => {
-    if (isMouseDown) grid.setCell(mouseX, mouseY, CellType.Sand);
-    grid.clearMovedCells();
-    updateGrid(grid);
+  function paintBrush(cx: number, cy: number, type: CellType) {
+    for (let dy = -brushRadius; dy <= brushRadius; dy++) {
+      for (let dx = -brushRadius; dx <= brushRadius; dx++) {
+        if (dx * dx + dy * dy <= brushRadius * brushRadius) {
+          grid.setCell(cx + dx, cy + dy, type);
+        }
+      }
+    }
+  }
+
+  let timeSinceLastPaint = 0;
+  let simulationAccumulator = 0;
+
+  app.ticker.add((ticker) => {
+    if (isMouseDown) {
+      timeSinceLastPaint += ticker.deltaMS;
+      if (
+        timeSinceLastPaint >= PAINT_INTERVALS[MATERIALS[currentMaterialIndex]]
+      ) {
+        paintBrush(mouseX, mouseY, MATERIALS[currentMaterialIndex]);
+        timeSinceLastPaint = 0;
+      }
+    } else {
+      timeSinceLastPaint = PAINT_INTERVALS[MATERIALS[currentMaterialIndex]];
+    }
+
+    simulationAccumulator += ticker.deltaMS;
+    let steps = 0;
+    while (
+      simulationAccumulator >= SIMULATION_INTERVAL &&
+      steps < MAX_STEPS_PER_TICK
+    ) {
+      grid.clearMovedCells();
+      updateGrid(grid);
+      simulationAccumulator -= SIMULATION_INTERVAL;
+      steps++;
+    }
+    if (steps === MAX_STEPS_PER_TICK) simulationAccumulator = 0;
+
     renderer.render();
   });
   app.ticker.maxFPS = 120;

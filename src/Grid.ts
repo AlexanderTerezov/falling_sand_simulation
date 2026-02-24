@@ -1,21 +1,34 @@
 export enum CellType {
   Empty = 0,
   Sand = 1,
+  Stone = 2,
+  Water = 3,
 }
 
 const BASE_COLORS: Record<CellType, [number, number, number, number]> = {
   [CellType.Empty]: [0, 0, 0, 0],
-  [CellType.Sand]: [194, 178, 128, 255],
+  [CellType.Sand]: [225, 188, 138, 255],
+  [CellType.Stone]: [128, 128, 128, 255],
+  [CellType.Water]: [64, 164, 223, 200],
 };
 
 const COLOR_VARIANCE: Record<CellType, number> = {
   [CellType.Empty]: 0,
   [CellType.Sand]: 0.12,
+  [CellType.Stone]: 0.15,
+  [CellType.Water]: 0,
+};
+
+export const PAINT_INTERVALS: Record<CellType, number> = {
+  [CellType.Empty]: 0,
+  [CellType.Sand]: 50,
+  [CellType.Stone]: 0,
+  [CellType.Water]: 50,
 };
 
 function packedColor(type: CellType): number {
   const [r, g, b, a] = BASE_COLORS[type];
-  const brightness = 1 + (Math.random() - 0.5) * COLOR_VARIANCE[type];
+  const brightness = 1 + Math.random() * COLOR_VARIANCE[type];
   const clamp = (n: number) => Math.max(0, Math.min(255, n)) | 0;
   return (
     (a << 24) |

@@ -5,6 +5,7 @@
 3. Water
 4. Acid
 5. Fire
-6. Smoke (maybe depends how hard)
+6. Lava
+7. Smoke (maybe depends how hard)
 
 ### Randomize Colors
