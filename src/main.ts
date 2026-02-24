@@ -9,7 +9,7 @@ import { updateGrid } from "./Behavior";
   (globalThis as any).__PIXI_APP__ = app;
   initDevtools({ app });
   await app.init({
-    background: "#222222",
+    backgroundAlpha: 0,
     resizeTo: window,
     antialias: false,
     resolution: 1,
@@ -17,7 +17,7 @@ import { updateGrid } from "./Behavior";
 
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
-  const CELL_SIZE = 5;
+  const CELL_SIZE = 10;
 
   let grid = new Grid(
     Math.ceil(window.innerWidth / CELL_SIZE),
@@ -30,24 +30,25 @@ import { updateGrid } from "./Behavior";
     const rows = Math.min(oldGrid.rows, newGrid.rows);
     for (let x = 0; x < cols; x++) {
       for (let y = 0; y < rows; y++) {
-        const type = oldGrid.getType(x, y);
-        if (type !== CellType.Empty) newGrid.setCell(x, y, type);
+        const i = oldGrid.index(x, y);
+        const type = oldGrid.types[i];
+        if (type !== CellType.Empty) {
+          const ni = newGrid.index(x, y);
+          newGrid.types[ni] = type;
+          newGrid.colors[ni] = oldGrid.colors[i];
+        }
       }
     }
   }
-
-  let resizeTimeout: ReturnType<typeof setTimeout>;
   window.addEventListener("resize", () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      const newGrid = new Grid(
-        Math.ceil(window.innerWidth / CELL_SIZE),
-        Math.floor(window.innerHeight / CELL_SIZE),
-      );
-      copyGrid(grid, newGrid);
-      grid = newGrid;
-      renderer = new Renderer(app, grid, CELL_SIZE);
-    }, 100);
+    const newGrid = new Grid(
+      Math.ceil(window.innerWidth / CELL_SIZE),
+      Math.floor(window.innerHeight / CELL_SIZE),
+    );
+    copyGrid(grid, newGrid);
+    grid = newGrid;
+    renderer.destroy();
+    renderer = new Renderer(app, grid, CELL_SIZE);
   });
 
   let isMouseDown = false;
@@ -77,4 +78,5 @@ import { updateGrid } from "./Behavior";
     updateGrid(grid);
     renderer.render();
   });
+  app.ticker.maxFPS = 120;
 })();

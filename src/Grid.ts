@@ -3,35 +3,46 @@ export enum CellType {
   Sand = 1,
 }
 
-const COLORS: Record<CellType, number> = {
-  [CellType.Empty]: 0xff222222,
-  [CellType.Sand]: 0xff80c8f0,
+const BASE_COLORS: Record<CellType, [number, number, number, number]> = {
+  [CellType.Empty]: [0, 0, 0, 0],
+  [CellType.Sand]: [194, 178, 128, 255],
 };
+
+const COLOR_VARIANCE: Record<CellType, number> = {
+  [CellType.Empty]: 0,
+  [CellType.Sand]: 0.12,
+};
+
+function packedColor(type: CellType): number {
+  const [r, g, b, a] = BASE_COLORS[type];
+  const brightness = 1 + (Math.random() - 0.5) * COLOR_VARIANCE[type];
+  const clamp = (n: number) => Math.max(0, Math.min(255, n)) | 0;
+  return (
+    (a << 24) |
+    (clamp(b * brightness) << 16) |
+    (clamp(g * brightness) << 8) |
+    clamp(r * brightness)
+  );
+}
 
 export class Grid {
   readonly cols: number;
   readonly rows: number;
-
   readonly types: Uint8Array;
-
   readonly colors: Uint32Array;
   readonly colorBytes: Uint8Array;
-
-  movedCells: Uint8Array;
+  readonly movedCells: Uint8Array;
 
   constructor(cols: number, rows: number) {
     this.cols = cols;
     this.rows = rows;
-
     const size = cols * rows;
     this.types = new Uint8Array(size);
-
+    this.movedCells = new Uint8Array(size);
     const buf = new ArrayBuffer(size * 4);
     this.colors = new Uint32Array(buf);
     this.colorBytes = new Uint8Array(buf);
-
-    this.colors.fill(COLORS[CellType.Empty]);
-    this.movedCells = new Uint8Array(size);
+    this.colors.fill(packedColor(CellType.Empty));
   }
 
   index(x: number, y: number): number {
@@ -46,7 +57,7 @@ export class Grid {
     if (!this.inBounds(x, y)) return;
     const i = this.index(x, y);
     this.types[i] = type;
-    this.colors[i] = COLORS[type];
+    this.colors[i] = packedColor(type);
   }
 
   getType(x: number, y: number): CellType {
