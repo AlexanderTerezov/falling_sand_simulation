@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Open the local URL shown by Vite (usually `http://localhost:5173` or with port 8080).
+Open the local URL shown by Vite (usually `http://localhost:8080` or with port 5173).
 
 ## Controls
 

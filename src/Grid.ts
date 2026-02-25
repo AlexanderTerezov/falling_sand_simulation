@@ -111,6 +111,12 @@ export class Grid {
 
     if (bloomColor) this.bloom[i] = bloomColor;
     else this.colors[i] = c;
+
+    // Clear everything if empty (Think of a smarter way later)
+    if (type == CellType.Empty) {
+      this.bloom[i] = Grid.EMPTY_COLOR;
+      this.colors[i] = Grid.EMPTY_COLOR;
+    }
   }
 
   moveCell(fromX: number, fromY: number, toX: number, toY: number): void {
