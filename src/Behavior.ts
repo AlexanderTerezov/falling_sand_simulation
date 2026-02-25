@@ -99,8 +99,8 @@ function trySwapWithWater(
 function updateWater(grid: Grid, x: number, y: number): void {
   const d = Math.random() < 0.5 ? -1 : 1;
   if (tryMove(grid, x, y, x, y + 1)) return;
-  if (tryMove(grid, x, y, x + d, y + 1)) return;
-  if (tryMove(grid, x, y, x - d, y + 1)) return;
+  //   if (tryMove(grid, x, y, x + d, y + 1)) return;
+  //   if (tryMove(grid, x, y, x - d, y + 1)) return;
   if (tryMove(grid, x, y, x + d, y)) return;
   tryMove(grid, x, y, x - d, y);
 }

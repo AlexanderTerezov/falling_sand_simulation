@@ -1,4 +1,5 @@
 import { Application, BufferImageSource, Sprite, Texture } from "pixi.js";
+import { BloomFilter } from "pixi-filters";
 import { Grid } from "./Grid";
 
 export class Renderer {
@@ -20,6 +21,9 @@ export class Renderer {
 
     this.texture = new Texture({ source: this.source });
     this.sprite = new Sprite(this.texture);
+
+    // Apply the filter
+    //this.sprite.filters = [new BloomFilter({ strength: 0.5 })];
     this.sprite.scale.set(cellSize);
 
     app.stage.addChild(this.sprite);
