@@ -105,6 +105,7 @@ function layoutLabelsAndSprites(
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
   // ---------- Asset Loading ----------
+
   await Assets.load("/assets/Tiny5-Regular.ttf");
   await Assets.load([
     "/assets/controls1.png",
@@ -115,7 +116,7 @@ function layoutLabelsAndSprites(
   BitmapFont.install({
     name: "Custom",
     style: {
-      fontFamily: "Tiny5 Regular", // Ensure this matches the loaded font's family name
+      fontFamily: "Tiny5 Regular",
       fontSize: CELL_SIZE * 3,
       fill: "#ffd4ab",
     },
@@ -157,7 +158,6 @@ function layoutLabelsAndSprites(
   let grid = createGridFromWindow();
   let renderer = new Renderer(app, grid, CELL_SIZE);
 
-  // Position UI elements for the first time
   layoutLabelsAndSprites(labels, controls);
 
   // ---------- Resize Handling ----------
@@ -259,7 +259,6 @@ function layoutLabelsAndSprites(
       timeSinceLastPaint = PAINT_INTERVALS[MATERIALS[currentMaterialIndex]];
     }
 
-    // Physics simulation steps
     simulationAccumulator += ticker.deltaMS;
     let steps = 0;
 
@@ -274,7 +273,7 @@ function layoutLabelsAndSprites(
     }
 
     if (steps === MAX_STEPS_PER_TICK) {
-      simulationAccumulator = 0; // Prevent spiral of death
+      simulationAccumulator = 0;
     }
 
     renderer.render();

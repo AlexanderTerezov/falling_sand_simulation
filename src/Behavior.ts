@@ -12,6 +12,7 @@
 type CellBehavior = (grid: Grid, x: number, y: number) => void;
 
 // ==================== Behavior Registry ====================
+
 const behaviors: Partial<Record<CellType, CellBehavior>> = {
   [CellType.Sand]: updateSand,
   [CellType.Water]: updateWater,
