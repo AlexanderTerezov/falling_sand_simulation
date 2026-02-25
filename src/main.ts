@@ -106,11 +106,11 @@ function layoutLabelsAndSprites(
 
   // ---------- Asset Loading ----------
 
-  await Assets.load("/assets/Tiny5-Regular.ttf");
+  await Assets.load("./assets/Tiny5-Regular.ttf");
   await Assets.load([
-    "/assets/controls1.png",
-    "/assets/controls2.png",
-    "/assets/controls3.png",
+    "./assets/controls1.png",
+    "./assets/controls2.png",
+    "./assets/controls3.png",
   ]);
 
   BitmapFont.install({
@@ -136,9 +136,9 @@ function layoutLabelsAndSprites(
   // ---------- Create UI Elements ----------
 
   const controlTextures = [
-    Assets.get("/assets/controls2.png"),
-    Assets.get("/assets/controls3.png"),
-    Assets.get("/assets/controls1.png"),
+    Assets.get("./assets/controls2.png"),
+    Assets.get("./assets/controls3.png"),
+    Assets.get("./assets/controls1.png"),
   ];
 
   const controls: Sprite[] = controlTextures.map((tex) => {
