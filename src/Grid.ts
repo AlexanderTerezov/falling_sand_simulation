@@ -32,6 +32,10 @@ const COLOR_VARIANCE: Record<CellType, number> = {
   [CellType.Acid]: 0.1,
 };
 
+const SAND_BRIGHTNESS_RANGE = 18;
+const SAND_RANDOM_JITTER = 2;
+let sandBrightnessOffset = 0;
+
 export const PAINT_INTERVALS: Record<CellType, number> = {
   [CellType.Empty]: 0,
   [CellType.Sand]: 50,
@@ -44,6 +48,25 @@ function packedColor(type: CellType): number {
   const [r, g, b, a] = BASE_COLORS[type];
   const brightness = 1 + Math.random() * COLOR_VARIANCE[type];
   const clamp = (n: number) => Math.max(0, Math.min(255, n)) | 0;
+
+  if (type === CellType.Sand) {
+    sandBrightnessOffset += Math.random() < 0.5 ? -1 : 1;
+    sandBrightnessOffset = Math.max(
+      -SAND_BRIGHTNESS_RANGE,
+      Math.min(SAND_BRIGHTNESS_RANGE, sandBrightnessOffset),
+    );
+    const jitter =
+      ((Math.random() * (SAND_RANDOM_JITTER * 2 + 1)) | 0) - SAND_RANDOM_JITTER;
+    const offset = sandBrightnessOffset + jitter;
+
+    return packColor(
+      clamp(r + offset),
+      clamp(g + offset),
+      clamp(b + offset),
+      a,
+    );
+  }
+
   return packColor(
     clamp(r * brightness),
     clamp(g * brightness),

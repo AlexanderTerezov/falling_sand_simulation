@@ -8,7 +8,7 @@
 6. Lava
 7. Smoke (maybe depends how hard)
 
-### Randomize Colors (change brightness smoothly when placing sand)
+### Randomize Colors (change brightness smoothly when placing sand) ✅
 
 ### Add buttons and text ✅
 
