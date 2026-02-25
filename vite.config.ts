@@ -6,5 +6,5 @@ export default defineConfig({
     port: 8080,
     open: true,
   },
-  base: "/",
+  base: "/falling_sand_simulation/",
 });
