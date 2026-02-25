@@ -193,8 +193,10 @@ const ACID_DISSOLVE_RULES: Partial<
 function updateAcid(grid: Grid, x: number, y: number): void {
   const i = grid.index(x, y);
 
-  for (const [targetType, rule] of Object.entries(ACID_DISSOLVE_RULES) as any) {
+  for (const targetType of Object.keys(ACID_DISSOLVE_RULES)) {
     const type = Number(targetType) as CellType;
+    const rule = ACID_DISSOLVE_RULES[type];
+    if (!rule) continue;
     for (const [dx, dy] of rule.directions) {
       const nx = x + dx;
       const ny = y + dy;
