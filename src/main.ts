@@ -4,6 +4,8 @@ import { Grid, CellType, PAINT_INTERVALS } from "./Grid";
 import { Renderer } from "./Renderer";
 import { updateGrid } from "./Behavior";
 
+// ==================== Constants ====================
+
 const CELL_SIZE = 10;
 const SIMULATION_INTERVAL = 8;
 const MAX_STEPS_PER_TICK = 8;
@@ -14,8 +16,11 @@ const MATERIALS: CellType[] = [
   CellType.Sand,
   CellType.Stone,
   CellType.Water,
+  CellType.Acid,
   CellType.Empty,
 ];
+
+// ==================== Helper Functions ====================
 
 function createGridFromWindow(): Grid {
   return new Grid(
@@ -82,6 +87,8 @@ function layoutLabelsAndSprites(
   });
 }
 
+// ==================== Main Application ====================
+
 (async () => {
   const app = new Application();
   (globalThis as { __PIXI_APP__?: Application }).__PIXI_APP__ = app;
@@ -97,8 +104,8 @@ function layoutLabelsAndSprites(
 
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
+  // ---------- Asset Loading ----------
   await Assets.load("/assets/Tiny5-Regular.ttf");
-
   await Assets.load([
     "/assets/controls1.png",
     "/assets/controls2.png",
@@ -108,7 +115,7 @@ function layoutLabelsAndSprites(
   BitmapFont.install({
     name: "Custom",
     style: {
-      fontFamily: "Tiny5 Regular",
+      fontFamily: "Tiny5 Regular", // Ensure this matches the loaded font's family name
       fontSize: CELL_SIZE * 3,
       fill: "#ffd4ab",
     },
@@ -121,9 +128,11 @@ function layoutLabelsAndSprites(
     resolution: window.devicePixelRatio,
     padding: 1,
     textureStyle: {
-      scaleMode: "nearest",
+      scaleMode: "nearest", // Keep pixelated look
     },
   });
+
+  // ---------- Create UI Elements ----------
 
   const controlTextures = [
     Assets.get("/assets/controls2.png"),
@@ -135,16 +144,23 @@ function layoutLabelsAndSprites(
     const sprite = new Sprite(tex);
     tex.source.scaleMode = "nearest";
     sprite.anchor.set(0.5);
-    app.stage.addChild(sprite);
     sprite.tint = 0xffd4ab;
+    app.stage.addChild(sprite);
     return sprite;
   });
 
   const labels = LABEL_TEXTS.map((label) => createCenterLabel(label));
   labels.forEach((label) => app.stage.addChild(label));
 
+  // ---------- Grid and Renderer Initialization ----------
+
   let grid = createGridFromWindow();
   let renderer = new Renderer(app, grid, CELL_SIZE);
+
+  // Position UI elements for the first time
+  layoutLabelsAndSprites(labels, controls);
+
+  // ---------- Resize Handling ----------
 
   const resizeGridAndRenderer = () => {
     const newGrid = createGridFromWindow();
@@ -160,25 +176,21 @@ function layoutLabelsAndSprites(
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
       resizeGridAndRenderer();
-
       requestAnimationFrame(() => {
         layoutLabelsAndSprites(labels, controls);
       });
     }, 100);
   });
 
-  layoutLabelsAndSprites(labels, controls);
-
-  window.addEventListener("resize", () => {
-    resizeGridAndRenderer();
-    layoutLabelsAndSprites(labels, controls);
-  });
+  // ---------- Interaction State ----------
 
   let currentMaterialIndex = 0;
   let brushRadius = 0;
   let isMouseDown = false;
   let mouseX = 0;
   let mouseY = 0;
+
+  // ---------- Event Handlers ----------
 
   const updateMouse = (e: MouseEvent) => {
     const rect = app.canvas.getBoundingClientRect();
@@ -229,6 +241,8 @@ function layoutLabelsAndSprites(
     e.preventDefault();
   });
 
+  // ---------- Game Loop ----------
+
   let timeSinceLastPaint = 0;
   let simulationAccumulator = 0;
 
@@ -245,6 +259,7 @@ function layoutLabelsAndSprites(
       timeSinceLastPaint = PAINT_INTERVALS[MATERIALS[currentMaterialIndex]];
     }
 
+    // Physics simulation steps
     simulationAccumulator += ticker.deltaMS;
     let steps = 0;
 
@@ -259,7 +274,7 @@ function layoutLabelsAndSprites(
     }
 
     if (steps === MAX_STEPS_PER_TICK) {
-      simulationAccumulator = 0;
+      simulationAccumulator = 0; // Prevent spiral of death
     }
 
     renderer.render();

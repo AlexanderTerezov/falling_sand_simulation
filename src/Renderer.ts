@@ -4,39 +4,61 @@ import { Grid } from "./Grid";
 
 export class Renderer {
   private readonly app: Application;
-  private readonly source: BufferImageSource;
-  private readonly texture: Texture;
-  private readonly sprite: Sprite;
+
+  private readonly baseSource: BufferImageSource;
+  private readonly baseTexture: Texture;
+  private readonly baseSprite: Sprite;
+
+  private readonly bloomSource: BufferImageSource;
+  private readonly bloomTexture: Texture;
+  private readonly bloomSprite: Sprite;
 
   constructor(app: Application, grid: Grid, cellSize: number) {
     this.app = app;
-    this.source = new BufferImageSource({
+
+    this.baseSource = new BufferImageSource({
       resource: grid.colorBytes,
       width: grid.cols,
       height: grid.rows,
       format: "rgba8unorm",
     });
+    this.baseSource.style.scaleMode = "nearest";
+    this.baseTexture = new Texture({ source: this.baseSource });
+    this.baseSprite = new Sprite(this.baseTexture);
+    this.baseSprite.scale.set(cellSize);
 
-    this.source.style.scaleMode = "nearest";
+    this.bloomSource = new BufferImageSource({
+      resource: grid.bloomBytes,
+      width: grid.cols,
+      height: grid.rows,
+      format: "rgba8unorm",
+    });
+    this.bloomSource.style.scaleMode = "nearest";
+    this.bloomTexture = new Texture({ source: this.bloomSource });
+    this.bloomSprite = new Sprite(this.bloomTexture);
+    this.bloomSprite.scale.set(cellSize);
 
-    this.texture = new Texture({ source: this.source });
-    this.sprite = new Sprite(this.texture);
+    this.bloomSprite.filters = [new BloomFilter({ strength: 10 })];
 
-    // Apply the filter
-    //this.sprite.filters = [new BloomFilter({ strength: 0.5 })];
-    this.sprite.scale.set(cellSize);
-
-    app.stage.addChild(this.sprite);
+    app.stage.addChild(this.baseSprite);
+    app.stage.addChild(this.bloomSprite);
   }
 
   render(): void {
-    this.source.update();
+    this.baseSource.update();
+    this.bloomSource.update();
   }
 
   destroy(): void {
-    this.app.stage.removeChild(this.sprite);
-    this.sprite.destroy();
-    this.texture.destroy(true);
-    this.source.destroy();
+    this.app.stage.removeChild(this.baseSprite);
+    this.app.stage.removeChild(this.bloomSprite);
+
+    this.baseSprite.destroy();
+    this.baseTexture.destroy(true);
+    this.baseSource.destroy();
+
+    this.bloomSprite.destroy();
+    this.bloomTexture.destroy(true);
+    this.bloomSource.destroy();
   }
 }
