@@ -12,6 +12,13 @@ const BASE_COLORS: Record<CellType, [number, number, number, number]> = {
   [CellType.Water]: [64, 164, 223, 200],
 };
 
+function packColor(r: number, g: number, b: number, a: number): number {
+  return (a << 24) | (b << 16) | (g << 8) | r;
+}
+
+export const WATER_SURFACE_COLOR = packColor(2, 173, 250, 70);
+export const WATER_SUBSURFACE_COLOR = packColor(2, 173, 250, 40);
+
 const COLOR_VARIANCE: Record<CellType, number> = {
   [CellType.Empty]: 0,
   [CellType.Sand]: 0.12,
@@ -30,15 +37,16 @@ function packedColor(type: CellType): number {
   const [r, g, b, a] = BASE_COLORS[type];
   const brightness = 1 + Math.random() * COLOR_VARIANCE[type];
   const clamp = (n: number) => Math.max(0, Math.min(255, n)) | 0;
-  return (
-    (a << 24) |
-    (clamp(b * brightness) << 16) |
-    (clamp(g * brightness) << 8) |
-    clamp(r * brightness)
+  return packColor(
+    clamp(r * brightness),
+    clamp(g * brightness),
+    clamp(b * brightness),
+    a,
   );
 }
 
 export class Grid {
+  private static readonly EMPTY_COLOR = packedColor(CellType.Empty);
   readonly cols: number;
   readonly rows: number;
   readonly types: Uint8Array;
@@ -55,7 +63,7 @@ export class Grid {
     const buf = new ArrayBuffer(size * 4);
     this.colors = new Uint32Array(buf);
     this.colorBytes = new Uint8Array(buf);
-    this.colors.fill(packedColor(CellType.Empty));
+    this.colors.fill(Grid.EMPTY_COLOR);
   }
 
   index(x: number, y: number): number {
@@ -71,6 +79,15 @@ export class Grid {
     const i = this.index(x, y);
     this.types[i] = type;
     this.colors[i] = packedColor(type);
+  }
+
+  moveCell(fromX: number, fromY: number, toX: number, toY: number): void {
+    const fromIndex = this.index(fromX, fromY);
+    const toIndex = this.index(toX, toY);
+    this.types[toIndex] = this.types[fromIndex];
+    this.colors[toIndex] = this.colors[fromIndex];
+    this.types[fromIndex] = CellType.Empty;
+    this.colors[fromIndex] = Grid.EMPTY_COLOR;
   }
 
   getType(x: number, y: number): CellType {

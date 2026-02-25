@@ -1,4 +1,4 @@
-import { Application } from "pixi.js";
+﻿import { Application } from "pixi.js";
 import { initDevtools } from "@pixi/devtools";
 import { Grid, CellType, PAINT_INTERVALS } from "./Grid";
 import { Renderer } from "./Renderer";
@@ -13,7 +13,7 @@ const MATERIALS = Object.values(CellType).filter(
 
 (async () => {
   const app = new Application();
-  (globalThis as any).__PIXI_APP__ = app;
+  (globalThis as { __PIXI_APP__?: Application }).__PIXI_APP__ = app;
   initDevtools({ app });
   await app.init({
     backgroundAlpha: 0,

@@ -1,4 +1,9 @@
-import { CellType, Grid } from "./Grid";
+﻿import {
+  CellType,
+  Grid,
+  WATER_SUBSURFACE_COLOR,
+  WATER_SURFACE_COLOR,
+} from "./Grid";
 
 let sweepLeftToRight = true;
 
@@ -18,6 +23,23 @@ export function updateGrid(grid: Grid): void {
       else if (type === CellType.Water) updateWater(grid, x, y);
     }
   }
+
+  applyWaterShading(grid);
+}
+
+function applyWaterShading(grid: Grid): void {
+  for (let y = 0; y < grid.rows; y++) {
+    for (let x = 0; x < grid.cols; x++) {
+      const i = grid.index(x, y);
+      if (grid.types[i] !== CellType.Water) continue;
+
+      const hasWaterAbove =
+        y > 0 && grid.types[grid.index(x, y - 1)] === CellType.Water;
+      grid.colors[i] = hasWaterAbove
+        ? WATER_SUBSURFACE_COLOR
+        : WATER_SURFACE_COLOR;
+    }
+  }
 }
 
 function tryMove(
@@ -26,27 +48,26 @@ function tryMove(
   y: number,
   tx: number,
   ty: number,
-  type: CellType,
 ): boolean {
+  if (!grid.inBounds(tx, ty)) return false;
+  const targetIndex = grid.index(tx, ty);
   if (
-    grid.inBounds(tx, ty) &&
-    grid.getType(tx, ty) === CellType.Empty &&
-    grid.movedCells[grid.index(tx, ty)] === 0
-  ) {
-    grid.setCell(x, y, CellType.Empty);
-    grid.setCell(tx, ty, type);
-    grid.movedCells[grid.index(tx, ty)] = 1;
-    return true;
-  }
-  return false;
+    grid.types[targetIndex] !== CellType.Empty ||
+    grid.movedCells[targetIndex] !== 0
+  )
+    return false;
+
+  grid.moveCell(x, y, tx, ty);
+  grid.movedCells[targetIndex] = 1;
+  return true;
 }
 
 function updateSand(grid: Grid, x: number, y: number): void {
   const d = Math.random() < 0.5 ? -1 : 1;
   if (trySwapWithWater(grid, x, y, x, y + 1)) return;
-  tryMove(grid, x, y, x, y + 1, CellType.Sand) ||
-    tryMove(grid, x, y, x + d, y + 1, CellType.Sand) ||
-    tryMove(grid, x, y, x - d, y + 1, CellType.Sand);
+  if (tryMove(grid, x, y, x, y + 1)) return;
+  if (tryMove(grid, x, y, x + d, y + 1)) return;
+  tryMove(grid, x, y, x - d, y + 1);
 }
 
 function trySwapWithWater(
@@ -64,9 +85,12 @@ function trySwapWithWater(
   const i = grid.index(x, y);
   if (grid.movedCells[i] !== 0) return false;
 
-  grid.types[i] = CellType.Water;
+  const sourceType = grid.types[i];
+  const sourceColor = grid.colors[i];
+  grid.types[i] = grid.types[ti];
   grid.colors[i] = grid.colors[ti];
-  grid.setCell(tx, ty, CellType.Sand);
+  grid.types[ti] = sourceType;
+  grid.colors[ti] = sourceColor;
   grid.movedCells[ti] = 1;
   grid.movedCells[i] = 1;
   return true;
@@ -74,9 +98,9 @@ function trySwapWithWater(
 
 function updateWater(grid: Grid, x: number, y: number): void {
   const d = Math.random() < 0.5 ? -1 : 1;
-  tryMove(grid, x, y, x, y + 1, CellType.Water) ||
-    tryMove(grid, x, y, x + d, y + 1, CellType.Water) ||
-    tryMove(grid, x, y, x - d, y + 1, CellType.Water) ||
-    tryMove(grid, x, y, x + d, y, CellType.Water) ||
-    tryMove(grid, x, y, x - d, y, CellType.Water);
+  if (tryMove(grid, x, y, x, y + 1)) return;
+  if (tryMove(grid, x, y, x + d, y + 1)) return;
+  if (tryMove(grid, x, y, x - d, y + 1)) return;
+  if (tryMove(grid, x, y, x + d, y)) return;
+  tryMove(grid, x, y, x - d, y);
 }

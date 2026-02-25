@@ -10,7 +10,7 @@ export class Renderer {
   constructor(app: Application, grid: Grid, cellSize: number) {
     this.app = app;
     this.source = new BufferImageSource({
-      resource: grid.colorBytes, // the GPU reads directly from this buffer
+      resource: grid.colorBytes,
       width: grid.cols,
       height: grid.rows,
       format: "rgba8unorm",
